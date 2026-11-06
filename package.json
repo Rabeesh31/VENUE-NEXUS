@@ -1,0 +1,16 @@
+{
+  "name": "venue-nexus",
+  "version": "0.1.0-draft",
+  "private": true,
+  "description": "VENUE NEXUS - Multi-Tenant Physical-to-Digital Operations Platform",
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "packageManager": "pnpm@12.18.0"
+}

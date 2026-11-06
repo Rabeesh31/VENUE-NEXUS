@@ -1,0 +1,44 @@
+# Dependencies and build outputs
+target/
+**/target/
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.pnpm-store/
+
+# Environment and secrets
+.env
+.env.local
+*.env
+!.env.example
+
+# Local data volumes
+data/
+**/data/
+.minio/
+pgdata/
+redisdata/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+**/logs/
+*.log

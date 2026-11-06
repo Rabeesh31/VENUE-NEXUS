@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: venue-nexus-backend-test
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+
+security:
+  jwt:
+    secret: dGhpcy1pcy1hLXRlc3Qtc2VjcmV0LWtleS1mb3ItdmVudWUtbmV4dXMtYXVkaXQtYW5kLXNlY3VyaXR5LXRlc3RzCg==
+    access-token-expiration-seconds: 900
+    refresh-token-expiration-seconds: 604800
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

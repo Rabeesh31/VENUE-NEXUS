@@ -1,0 +1,79 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  backend-checks:
+    name: Backend Build, Unit Tests & Architecture Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.1.7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4.2.1
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build Backend & Run Unit Tests
+        run: |
+          ./mvnw -f backend/pom.xml clean test
+
+      - name: Architecture checks
+        run: |
+          ./mvnw -f backend/pom.xml test -Dtest=ArchitectureRulesTest
+
+  frontend-checks:
+    name: Frontend Install & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.1.7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3.0.2
+        with:
+          version: '12.18.0'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Workspace Dependencies
+        run: |
+          pnpm install --frozen-lockfile
+
+      - name: Build Frontend Workspace
+        run: |
+          pnpm -r build
+
+  docs-checks:
+    name: Documentation Compliance (CR-01 Lettuce Check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.1.7
+
+      - name: Check for Forbidden Redis Client Name in Contracts
+        run: |
+          echo "Verifying that 'Lettuce' does not appear in architecture.md or deployment.md..."
+          if grep -i "lettuce" docs/architecture.md docs/deployment.md; then
+            echo "ERROR: CR-01 violation detected! The word 'Lettuce' must not appear in architecture.md or deployment.md."
+            exit 1
+          fi
+          echo "Lettuce check passed: 0 occurrences found."

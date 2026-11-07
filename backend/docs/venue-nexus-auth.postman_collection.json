@@ -1,0 +1,370 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "name": "VENUE NEXUS - Staff Authentication & Security Suite",
+    "description": "Sprint 1 Phase 3 Postman collection covering staff authentication, rotation, logout, lockout, and hierarchical scope enforcement tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Login OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.accessToken).to.be.a('string');",
+              "pm.expect(jsonData.refreshToken).to.be.a('string');",
+              "pm.environment.set('accessToken', jsonData.accessToken);",
+              "pm.environment.set('refreshToken', jsonData.refreshToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{staffEmail}}\",\n  \"password\": \"{{staffPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "02 - Login Bad Password",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.error).to.eql('AUTH_INVALID_CREDENTIALS');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{staffEmail}}\",\n  \"password\": \"WrongPassword!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "03 - Login Unknown Email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401 (anti-enumeration)', function () { pm.response.to.have.status(401); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.error).to.eql('AUTH_INVALID_CREDENTIALS');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"unknown.user@venuenexus.com\",\n  \"password\": \"AnyPassword123!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "04 - Login Locked Account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 423 Locked', function () { pm.response.to.have.status(423); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.error).to.eql('AUTH_ACCOUNT_LOCKED');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"locked.staff@venuenexus.com\",\n  \"password\": \"{{staffPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "05 - Refresh OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.accessToken).to.be.a('string');",
+              "pm.expect(jsonData.refreshToken).to.be.a('string');",
+              "pm.environment.set('rotatedRefreshToken', pm.environment.get('refreshToken'));",
+              "pm.environment.set('accessToken', jsonData.accessToken);",
+              "pm.environment.set('refreshToken', jsonData.refreshToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/refresh",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "refresh"]
+        }
+      }
+    },
+    {
+      "name": "06 - Refresh Reuse Detection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401 reuse detected', function () { pm.response.to.have.status(401); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.error).to.eql('AUTH_REFRESH_REUSE_DETECTED');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{rotatedRefreshToken}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/refresh",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "refresh"]
+        }
+      }
+    },
+    {
+      "name": "07 - Logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 204 No Content', function () { pm.response.to.have.status(204); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/logout",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "logout"]
+        }
+      }
+    },
+    {
+      "name": "08 - Reuse After Logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401 revoked', function () { pm.response.to.have.status(401); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.error).to.eql('AUTH_TOKEN_REVOKED');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/test/any-staff",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "test", "any-staff"]
+        }
+      }
+    },
+    {
+      "name": "09 - Wrong Role",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 403 Forbidden', function () { pm.response.to.have.status(403); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.error).to.eql('ACCESS_DENIED');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/test/platform-only",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "test", "platform-only"]
+        }
+      }
+    },
+    {
+      "name": "10 - Cross-Tenant Access",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 (anti-enumeration)', function () { pm.response.to.have.status(404); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.error).to.eql('NOT_FOUND');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{tenantAToken}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/test/records/{{tenantBRecordId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "test", "records", "{{tenantBRecordId}}"]
+        }
+      }
+    },
+    {
+      "name": "11 - Cross-Location Access",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 (location isolation)', function () { pm.response.to.have.status(404); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(jsonData.error).to.eql('NOT_FOUND');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{location1Token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/test/records/{{location2RecordId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "test", "records", "{{location2RecordId}}"]
+        }
+      }
+    },
+    {
+      "name": "12 - Expired / Tampered Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });",
+              "var jsonData = pm.response.json();",
+              "pm.expect(['AUTH_TOKEN_INVALID', 'AUTH_TOKEN_EXPIRED']).to.include(jsonData.error);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.payload" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/test/any-staff",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "test", "any-staff"]
+        }
+      }
+    }
+  ]
+}
+

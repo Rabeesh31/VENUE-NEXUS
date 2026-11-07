@@ -1,0 +1,75 @@
+
+spring:
+  application:
+    name: venue-nexus-backend
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/venuenexus}
+    username: ${SPRING_DATASOURCE_USERNAME:venuenexus}
+    password: ${SPRING_DATASOURCE_PASSWORD:venuenexus}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: VenueNexusHikariCP
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      register-mbeans: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+security:
+  jwt:
+    staff-secret: ${JWT_STAFF_SECRET:default-testing-secret-must-be-at-least-32-bytes-long!}
+    issuer: venue-nexus
+    audience: venue-nexus-staff
+    access-ttl: PT15M
+    leeway: PT0S
+
+  refresh:
+    ttl: P7D
+
+  login:
+    max-failed-attempts: 5
+    lockout-duration: PT15M
+
+  password:
+    bcrypt-strength: 12
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true

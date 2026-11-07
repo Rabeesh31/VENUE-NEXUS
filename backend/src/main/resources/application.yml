@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: venue-nexus-phase3
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/venuenexus}
+    username: ${SPRING_DATASOURCE_USERNAME:venuenexus}
+    password: ${SPRING_DATASOURCE_PASSWORD:venuenexus}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+security:
+  jwt:
+    staff-secret: ${JWT_STAFF_SECRET:default-testing-secret-must-be-at-least-32-bytes-long!}
+    issuer: venue-nexus
+    audience: venue-nexus-staff
+    access-ttl: PT15M
+    leeway: PT0S
+  refresh:
+    ttl: P7D
+  login:
+    max-failed-attempts: 5
+    lockout-duration: PT15M
+  password:
+    bcrypt-strength: 12
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+

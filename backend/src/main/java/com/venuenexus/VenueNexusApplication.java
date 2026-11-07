@@ -10,4 +10,3 @@ public class VenueNexusApplication {
         SpringApplication.run(VenueNexusApplication.class, args);
     }
 }
-

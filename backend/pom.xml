@@ -12,21 +12,21 @@
     </parent>
 
     <groupId>com.venuenexus</groupId>
-    <artifactId>venue-nexus-phase3</artifactId>
+    <artifactId>venue-nexus-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>venue-nexus-phase3</name>
-    <description>VENUE NEXUS - Sprint 1 Phase 3: Staff Identity and Security</description>
+    <name>venue-nexus-backend</name>
+    <description>VENUE NEXUS - Multi-tenant physical-to-digital operations platform backend</description>
 
     <properties>
         <java.version>21</java.version>
         <jjwt.version>0.12.6</jjwt.version>
         <archunit.version>1.3.0</archunit.version>
         <springdoc.version>2.5.0</springdoc.version>
-        <lombok.version>1.18.32</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
     </properties>
 
     <dependencies>
-        <!-- Upstream Phase 1 (Common Error, Filter, Tracing, Audit) -->
+        <!-- Upstream Phase 1 (Common Error, Filter, Tracing, Audit, Pagination) -->
         <dependency>
             <groupId>com.venuenexus.phase1</groupId>
             <artifactId>venue-nexus-phase1</artifactId>
@@ -35,24 +35,7 @@
             <systemPath>${project.basedir}/lib/phase1-backend-0.1.0-SNAPSHOT.jar</systemPath>
         </dependency>
 
-        <!-- Upstream Phase 2 (Database Entities, Repositories, Domain Hierarchy) -->
-        <dependency>
-            <groupId>com.venuenexus.phase2</groupId>
-            <artifactId>venue-nexus-phase2</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/phase2-backend-0.0.1-SNAPSHOT.jar</systemPath>
-        </dependency>
-
-        <!-- Lombok (Required for Phase 2 entities) -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- Spring Boot Web & Security -->
+        <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -77,6 +60,24 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+
+        <!-- Database and migrations -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- API documentation -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -102,19 +103,20 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Database Drivers & In-Memory for testing -->
+        <!-- Lombok -->
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
+
+        <!-- Testing -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -163,6 +165,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

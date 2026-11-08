@@ -1,15 +1,16 @@
 # VENUE NEXUS - REST API Contract Specification
 
 **Document Title:** REST API Contract Specification  
-**Version:** 0.1-DRAFT  
+**Version:** 0.2-DRAFT  
 **Status:** DRAFT - awaiting approval by Rabeesh R  
 **Owner:** Rithik Saran (Backend Lead)  
-**Date:** 6 November 2026  
+**Date:** 8 November 2026  
 
 ## Change Log
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1-DRAFT | 6 November 2026 | Rithik Saran | Baseline draft of REST conventions, error envelope, pagination format, error code catalogue, idempotency rules, and CR-01..CR-05 contracts. |
+| 0.2-DRAFT | 8 November 2026 | Rithik Saran | Added section 3.4 'Error contract agreed with frontend' with complete worked examples (wrong login, validation, 403, 404, 500) and frontend usage rules per Team Lead review note. |
 
 ---
 
@@ -115,6 +116,119 @@ Every error response from the platform adheres strictly to this format:
 ```
 - **Information Protection Rule:** The error payload must **never** include Java stack traces, SQL syntax snippets, internal package names, or database column names.
 - **Traceability:** The `traceId` in the body matches the `X-Trace-Id` HTTP response header and server logs.
+
+### 3.4 Error Contract Agreed with Frontend [PROPOSED]
+
+This section establishes the shared error handling contract between the backend and the frontend applications (Staff Portal and Customer Web App) agreed per Team Lead review note.
+
+#### 1. Common Response Format
+The backend returns an identical JSON structure for all HTTP 4xx and 5xx errors:
+- `timestamp` (ISO-8601 UTC string)
+- `status` (integer HTTP status code matching HTTP header)
+- `code` (standard platform error code string from Error Code Catalogue)
+- `message` (human-readable summary message safe for display)
+- `path` (request URI path)
+- `traceId` (UUID string matching `X-Trace-Id` response header)
+- `details` (array of field-level errors; empty array `[]` when no field-specific details exist)
+
+#### 2. Worked Examples & Frontend Consumption Rules
+
+##### a) Wrong Login (HTTP 401 Unauthorized)
+Returned when authentication fails during staff login:
+```json
+{
+  "timestamp": "2026-11-08T10:15:30.123Z",
+  "status": 401,
+  "code": "AUTH_INVALID_CREDENTIALS",
+  "message": "Invalid login credentials",
+  "path": "/api/v1/auth/login",
+  "traceId": "c6a2b8e4-1f3d-4c5e-8a9b-7e6d5c4b3a21",
+  "details": []
+}
+```
+**Frontend Consumption Rules:**
+- Inspect `response.data.code === "AUTH_INVALID_CREDENTIALS"`.
+- Display `response.data.message` ("Invalid login credentials") directly on the login form (e.g. alert banner or below password input).
+- **Security Requirement:** The message must **never** reveal whether the email exists in the database. Both wrong password and non-existent email return the exact same generic message to prevent user enumeration.
+
+##### b) Validation Error (HTTP 400 Bad Request)
+Returned when request parameters or payload body violate schema/validation constraints:
+```json
+{
+  "timestamp": "2026-11-08T10:15:30.123Z",
+  "status": 400,
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed for one or more fields.",
+  "path": "/api/v1/resources",
+  "traceId": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "details": [
+    {
+      "field": "code",
+      "issue": "must not be blank"
+    },
+    {
+      "field": "capacity",
+      "issue": "must be greater than 0"
+    }
+  ]
+}
+```
+**Frontend Consumption Rules:**
+- Iterate over the `details` array.
+- Map each `detail.field` to the corresponding form input name.
+- Render `detail.issue` inline beneath the corresponding input field.
+
+##### c) Forbidden Access (HTTP 403 Forbidden)
+Returned when user identity is authenticated but lacks required RBAC permission or location scope:
+```json
+{
+  "timestamp": "2026-11-08T10:15:30.123Z",
+  "status": 403,
+  "code": "ACCESS_DENIED",
+  "message": "Access is denied for this role and permission.",
+  "path": "/api/v1/admin/tenants",
+  "traceId": "f7e6d5c4-b3a2-1f0e-9d8c-7b6a5e4d3c2b",
+  "details": []
+}
+```
+**Frontend Consumption Rules:**
+- Display an unauthorized access alert banner or navigate user to a restricted access notification page.
+- Do not expose internal permission identifiers in end-user messaging.
+
+##### d) Resource Not Found (HTTP 404 Not Found)
+Returned when target resource does not exist or belongs to another tenant (concealed):
+```json
+{
+  "timestamp": "2026-11-08T10:15:30.123Z",
+  "status": 404,
+  "code": "RESOURCE_NOT_FOUND",
+  "message": "The requested resource could not be found.",
+  "path": "/api/v1/resources/018f45a2-3c4d-7a8e-9f10-123456789abc",
+  "traceId": "e5d4c3b2-a1f0-9e8d-7c6b-5a4e3d2c1b0a",
+  "details": []
+}
+```
+**Frontend Consumption Rules:**
+- Display a "Resource not found" toast or empty state illustration.
+- Remove deleted/missing entity from local state cache.
+
+##### e) Internal Server Error (HTTP 500 Internal Server Error)
+Returned on unexpected server-side runtime failure:
+```json
+{
+  "timestamp": "2026-11-08T10:15:30.123Z",
+  "status": 500,
+  "code": "INTERNAL_ERROR",
+  "message": "An internal server error occurred.",
+  "path": "/api/v1/orders",
+  "traceId": "9a8b7c6d-5e4f-3a2b-1c0d-e9f8a7b6c5d4",
+  "details": []
+}
+```
+**Frontend Consumption Rules:**
+- Show a user-friendly generic toast: "Something went wrong. Please try again later."
+- Display `traceId` with copy-to-clipboard functionality so users can quote the incident ID to technical support.
+- Never expect or parse internal stack traces or database errors.
 
 ---
 

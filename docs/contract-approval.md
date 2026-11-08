@@ -1,15 +1,16 @@
 # VENUE NEXUS - Contract Approval & Sign-Off Matrix
 
 **Document Title:** Contract Approval & Sign-Off Matrix  
-**Version:** 0.1-DRAFT  
-**Status:** DRAFT - awaiting approval by Rabeesh R  
+**Version:** 0.2-DRAFT  
+**Status:** DRAFT - awaiting approval by Rabeesh R and confirmation by Lackshana  
 **Owner:** Rithik Saran (Backend Lead)  
-**Date:** 6 November 2026  
+**Date:** 8 November 2026  
 
 ## Change Log
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1-DRAFT | 6 November 2026 | Rithik Saran | Baseline draft of contract approval table and TRD 15.3 verification checklist. |
+| 0.2-DRAFT | 8 November 2026 | Rithik Saran | Added Frontend Error Contract review document and sign-off criteria for Lackshana per Team Lead review note. |
 
 ---
 
@@ -18,18 +19,19 @@
 | Document | File Path | Version | Author / Owner | Reviewer | Approval Status | Date |
 |---|---|---|---|---|---|---|
 | **System Architecture** | `docs/architecture.md` | 0.1-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
-| **REST API Contract** | `docs/api-contract.md` | 0.1-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
+| **REST API Contract** | `docs/api-contract.md` | 0.2-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
 | **Outbox Event Contract** | `docs/event-contract.md` | 0.1-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
-| **Database Schema** | `docs/db-schema.md` | 0.1-DRAFT | Rithik Saran & Kavisharmitha | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
-| **Security & Permissions** | `docs/security.md` | 0.1-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
+| **Database Schema** | `docs/db-schema.md` | 0.2-DRAFT | Rithik Saran & Kavisharmitha | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
+| **Security & Permissions** | `docs/security.md` | 0.2-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
 | **Deployment & Ops** | `docs/deployment.md` | 0.1-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
-| **Open Decisions Registry**| `docs/open-decisions.md` | 0.1-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
+| **Open Decisions Registry**| `docs/open-decisions.md` | 0.2-DRAFT | Rithik Saran (Backend Lead) | Rabeesh R (Team Lead) | *PENDING APPROVAL* | — |
+| **Frontend Error Review** | `docs/frontend-error-contract-review.md` | 0.1-DRAFT | Rithik Saran (Backend Lead) | Lackshana (Frontend Lead) | *PENDING CONFIRMATION* | — |
 
 ---
 
 ## 2. TRD Section 15.3 Contract Approval Checklist
 
-Before the Sprint 1 contract freeze can be finalized, Team Lead Rabeesh R must verify and sign off on each item below:
+Before the Sprint 1 contract freeze can be finalized, Team Lead Rabeesh R and team leads must verify and sign off on each item below:
 
 | # | Contract Item | Verification Criteria | Location in Contract Docs | Sign-Off Status |
 |---|---|---|---|---|
@@ -42,10 +44,16 @@ Before the Sprint 1 contract freeze can be finalized, Team Lead Rabeesh R must v
 | 7 | **CR-01 Redis Client Wording** | Term "Lettuce" completely eliminated from `architecture.md` and `deployment.md`. Client referred to as "the Redis client" or "Spring Boot's default Redis client, see pom.xml". | `docs/architecture.md`, `docs/deployment.md` | [ ] Pending |
 | 8 | **Role Matrix Additions** | Proposed rows included for `PAYMENT_VIEW`, `REFUND_REQUEST`, `REFUND_APPROVE`, and `AI_ADMIN` with role assignments marked *Pending Team Lead confirmation* and mentor approval. | `docs/security.md` §2 | [ ] Pending |
 | 9 | **Reserved Audit Event Types** | Event types defined: `PAYMENT_SUCCEEDED`, `REFUND_REQUESTED`, `SESSION_ENDED`, `AI_FEATURE_USED` in audit catalog. | `docs/security.md` §6 | [ ] Pending |
+| 10 | **Frontend API Error Contract** | Standard 7-field error envelope (TP-02), worked examples (wrong login 401, validation 400, forbidden 403, not found 404, internal error 500), and frontend consumption rules documented in `docs/frontend-error-contract-review.md` with 4 confirmation questions for Lackshana. | `docs/frontend-error-contract-review.md`, `docs/api-contract.md` §3.4 | [ ] Pending |
 
 ---
 
 ## 3. Formal Sign-Off Record
+
 **Team Lead Sign-Off:** ___________________________  
+**Date:** ___________________________  
+**Notes:**  
+
+**Frontend Lead Sign-Off (Error Contract):** ___________________________  
 **Date:** ___________________________  
 **Notes:**  

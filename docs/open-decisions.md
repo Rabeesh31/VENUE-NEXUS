@@ -1,15 +1,16 @@
 # VENUE NEXUS - Open Decisions & Proposals Registry
 
 **Document Title:** Open Decisions & Proposals Registry  
-**Version:** 0.1-DRAFT  
+**Version:** 0.2-DRAFT  
 **Status:** DRAFT - awaiting approval by Rabeesh R  
 **Owner:** Rithik Saran (Backend Lead)  
-**Date:** 6 November 2026  
+**Date:** 8 November 2026  
 
 ## Change Log
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1-DRAFT | 6 November 2026 | Rithik Saran | Initial compilation of change-request decisions D-1..D-8, PRD/TRD open items, and Phase 1 technical proposals. |
+| 0.2-DRAFT | 8 November 2026 | Rithik Saran | Updated TP-11 (database-level counter table audit_chain and row locking implemented per Team Lead review note; added to Phase 2 review items) and OI-06 (Contract ready, awaiting frontend lead confirmation). |
 
 ---
 
@@ -45,7 +46,7 @@ All items listed below represent proposals pending formal confirmation.
 | **OI-03** | **Confirmation of required location configuration columns.** Base columns: name, time zone, currency. Additional settings (e.g. tax identifier, contact) open. | Location entity / DB Schema | PROPOSED - pending Team Lead confirmation |
 | **OI-04** | **Confirmation of QR print layout and branding requirements.** Print dimensions, SVG/PNG styling tokens, and tenant logo embedding. | Resource QR service | PROPOSED - pending UI/UX confirmation |
 | **OI-05** | **Confirmation whether bulk resource creation is included in Sprint 1 (Should vs Must).** Numbered sequence generation (e.g., Tables 1-20). | Resource API / UI | PROPOSED - Should requirement per PRD |
-| **OI-06** | **Confirmation of API error codes and final error response contract.** Error structure, envelope fields, and status mapping. | Common backend, API contract | PROPOSED - draft frozen in `api-contract.md` |
+| **OI-06** | **Confirmation of API error codes and final error response contract.** Error structure, envelope fields, and status mapping. | Common backend, API contract | Contract ready, awaiting frontend lead confirmation |
 | **OI-07** | **Agreement on team workstream assignments.** Allocation of 7 team members across the sprint work packages. | Sprint Management | PROPOSED - assignments confirmed in Phase 1 plan |
 
 ---
@@ -64,4 +65,4 @@ All items listed below represent proposals pending formal confirmation.
 | **TP-08** | Trace ID Filter Safe Header Pattern | Regex: `^[A-Za-z0-9-]{8,64}$` | Prevents CRLF injection and log forgery while accepting standard UUIDs or custom IDs. |
 | **TP-09** | Public QR Target URL Format | `${QR_BASE_URL}/q/{token}` where token is 22-char base64url | Unguessable URL format pointing to customer landing experience. |
 | **TP-10** | Proposed Payment/Refund/AI Permissions | `PAYMENT_VIEW`, `REFUND_REQUEST`, `REFUND_APPROVE`, `AI_ADMIN` | Required for CR-02 and CR-03 governance; pending mentor approval. |
-| **TP-11** | Audit Log Sequence Serialization | Per-tenant reentrant lock in memory; DB unique constraint `(tenant_id, sequence)` with retry in Phase 2 | Prevents audit chain forking under concurrent requests. |
+| **TP-11** | Audit Log Sequence Serialization | Database counter table (audit_chain) locked via SELECT ... FOR UPDATE in a single transaction; monotonic sequences without gaps or duplicates; unique index on audit_log as backstop | Implemented per Team Lead review note, counter table added to the Phase 2 review items, awaiting approval. |

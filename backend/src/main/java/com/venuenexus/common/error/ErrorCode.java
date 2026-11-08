@@ -14,7 +14,7 @@ public enum ErrorCode {
     PAGINATION_INVALID(HttpStatus.BAD_REQUEST, "Invalid pagination parameters."),
     INVALID_PARENT_CHILD(HttpStatus.BAD_REQUEST, "Invalid parent-child relationship."),
 
-    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid email or password."),
+    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid login credentials"),
     AUTH_ACCOUNT_LOCKED(HttpStatus.UNAUTHORIZED, "Account has been locked due to repeated failed login attempts."),
     AUTH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "Authentication token has expired."),
     AUTH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "Authentication token is invalid or malformed."),

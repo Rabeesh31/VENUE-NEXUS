@@ -5,63 +5,81 @@ import com.venuenexus.audit.model.AuditRecord;
 import com.venuenexus.audit.port.AuditLogStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Append-only, tamper-evident hash-chained audit logging service.
  * Enforces per-tenant serialized sequence progression and SHA-256 chain verification.
+ * In production/PostgreSQL, sequence counters are maintained in the audit_chain table
+ * with row locks (SELECT ... FOR UPDATE) in a single database transaction.
  * Matches docs/security.md §6 and Step 1.5f.
  */
 @Service
+@Transactional
 public class AuditLogService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuditLogService.class);
 
     public static final String GENESIS_PREV_HASH = "0".repeat(64);
-    private static final UUID PLATFORM_LOCK_SENTINEL = new UUID(0L, 0L);
 
     private final AuditLogStore auditLogStore;
     private final AuditDetailsSanitizer sanitizer;
-    private final Map<UUID, Object> chainLocks = new ConcurrentHashMap<>();
+    private final TransactionTemplate transactionTemplate;
 
     public AuditLogService(AuditLogStore auditLogStore, AuditDetailsSanitizer sanitizer) {
+        this(auditLogStore, sanitizer, (PlatformTransactionManager) null);
+    }
+
+    public AuditLogService(AuditLogStore auditLogStore, AuditDetailsSanitizer sanitizer, @Nullable PlatformTransactionManager transactionManager) {
         this.auditLogStore = auditLogStore;
         this.sanitizer = sanitizer;
+        this.transactionTemplate = (transactionManager != null) ? new TransactionTemplate(transactionManager) : null;
+    }
+
+    public AuditLogService(AuditLogStore auditLogStore, AuditDetailsSanitizer sanitizer, @Nullable TransactionTemplate transactionTemplate) {
+        this.auditLogStore = auditLogStore;
+        this.sanitizer = sanitizer;
+        this.transactionTemplate = transactionTemplate;
     }
 
     /**
      * Records a new audit event into the tenant's hash chain.
-     * Synchronized per tenant to guarantee monotonic sequence and prevent chain forking.
+     * Runs in ONE database transaction: locks the chain counter row, increments sequence,
+     * calculates SHA-256 hash using last_hash as prev_hash, inserts audit_log, and updates audit_chain.
+     * Simultaneous callers for the same tenant wait in line at the row lock, guaranteeing
+     * gapless monotonic sequences (1, 2, 3...) and preventing chain forks.
+     * Rollback undoes the counter advancement cleanly.
      */
+    @Transactional
     public AuditRecord record(AuditEvent event) {
         if (event == null) {
             throw new IllegalArgumentException("AuditEvent must not be null");
         }
 
-        UUID lockKey = (event.tenantId() != null) ? event.tenantId() : PLATFORM_LOCK_SENTINEL;
-        Object chainLock = chainLocks.computeIfAbsent(lockKey, k -> new Object());
+        if (transactionTemplate != null) {
+            return transactionTemplate.execute(status -> doRecord(event));
+        } else {
+            return doRecord(event);
+        }
+    }
 
-        synchronized (chainLock) {
-            Optional<AuditRecord> latestRecordOpt = auditLogStore.findLatestByTenant(event.tenantId());
-
-            long nextSequence;
-            String prevHash;
-
-            if (latestRecordOpt.isEmpty()) {
-                nextSequence = 1L;
-                prevHash = GENESIS_PREV_HASH;
-            } else {
-                AuditRecord latest = latestRecordOpt.get();
-                nextSequence = latest.sequence() + 1L;
-                prevHash = latest.hash();
-            }
+    private AuditRecord doRecord(AuditEvent event) {
+        AuditLogStore.ChainState chainState = auditLogStore.lockChain(event.tenantId());
+        try {
+            long nextSequence = chainState.lastSequence() + 1L;
+            String prevHash = (chainState.lastSequence() == 0L)
+                    ? GENESIS_PREV_HASH
+                    : chainState.lastHash();
 
             String sanitizedDetails = sanitizer.toJsonString(event.details());
             String ipHash = AuditDetailsSanitizer.hashIp(event.clientIp());
@@ -99,6 +117,9 @@ public class AuditLogService {
                     event.tenantId(), nextSequence, event.eventType(), hash);
 
             return record;
+        } catch (RuntimeException | Error e) {
+            auditLogStore.releaseLock(event.tenantId());
+            throw e;
         }
     }
 
@@ -109,6 +130,7 @@ public class AuditLogService {
      * @param tenantId Tenant ID to verify (null for platform chain)
      * @return Optional containing the first broken sequence number if compromised; empty if valid.
      */
+    @Transactional(readOnly = true)
     public Optional<Long> verifyChain(UUID tenantId) {
         List<AuditRecord> chain = auditLogStore.findAllByTenantOrderBySequenceAsc(tenantId);
         if (chain.isEmpty()) {

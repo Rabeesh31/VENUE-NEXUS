@@ -43,6 +43,22 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("ApiException(AUTH_INVALID_CREDENTIALS) returns 401 and body matching contract example exactly")
+    void handleAuthInvalidCredentialsMatchesContract() throws Exception {
+        mockMvc.perform(get("/test/auth-invalid-credentials"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().exists(TraceIdFilter.TRACE_HEADER))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.code").value("AUTH_INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.message").value("Invalid login credentials"))
+                .andExpect(jsonPath("$.path").value("/test/auth-invalid-credentials"))
+                .andExpect(jsonPath("$.traceId").isNotEmpty())
+                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details", empty()));
+    }
+
+    @Test
     @DisplayName("MethodArgumentNotValidException returns 400 VALIDATION_FAILED with field details")
     void handleValidationFailure() throws Exception {
         mockMvc.perform(post("/test/validation")

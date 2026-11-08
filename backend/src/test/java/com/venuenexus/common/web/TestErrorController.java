@@ -25,6 +25,11 @@ public class TestErrorController {
         throw new ApiException(ErrorCode.CONFLICT_DUPLICATE, "Duplicate resource code detected.");
     }
 
+    @GetMapping("/auth-invalid-credentials")
+    public void throwAuthInvalidCredentials() {
+        throw new ApiException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+    }
+
     @PostMapping("/validation")
     public ResponseEntity<String> testValidation(@Valid @RequestBody TestRequest request) {
         return ResponseEntity.ok("Valid: " + request.name());

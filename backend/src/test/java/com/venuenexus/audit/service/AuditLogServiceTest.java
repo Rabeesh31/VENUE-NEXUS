@@ -175,8 +175,8 @@ class AuditLogServiceTest {
     @DisplayName("Concurrent record calls serialize per tenant and keep the chain valid")
     void concurrentRecordingKeepsChainValid() throws InterruptedException {
         UUID tenantId = UUID.randomUUID();
-        int threadCount = 20;
-        int operationsPerThread = 10;
+        int threadCount = 50;
+        int operationsPerThread = 5;
         int totalEvents = threadCount * operationsPerThread;
 
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);

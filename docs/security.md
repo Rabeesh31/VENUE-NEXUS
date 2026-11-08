@@ -1,15 +1,16 @@
 # VENUE NEXUS - Security, Authentication and Authorization Specification
 
 **Document Title:** Security, Authentication and Authorization Specification  
-**Version:** 0.1-DRAFT  
+**Version:** 0.2-DRAFT  
 **Status:** DRAFT - awaiting approval by Rabeesh R  
 **Owner:** Rithik Saran (Backend Lead)  
-**Date:** 6 November 2026  
+**Date:** 8 November 2026  
 
 ## Change Log
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1-DRAFT | 6 November 2026 | Rithik Saran | Baseline draft of RBAC matrix, token lifecycle, QR cryptography, audit hash chain, logging rules, CR-02 payment/refund roles, and CR-03 AI data-handling policies. |
+| 0.2-DRAFT | 8 November 2026 | Rithik Saran | Updated §6.1 Audit Chain description to specify database-level counter table audit_chain, row locking (SELECT FOR UPDATE) in a single transaction, rollback behavior, and backstop unique index per Team Lead review note. |
 
 ---
 
@@ -134,10 +135,22 @@ A QR code in VENUE NEXUS is an **identifier for a physical resource**, not a cus
 
 The platform audit log is append-only, tamper-evident, and partitioned per tenant.
 
-### 6.1 Audit Chain Scope
+### 6.1 Audit Chain Scope & Database-Level Sequence Serialization
 - **Per-Tenant Chain:** Every tenant maintains an isolated sequence starting at 1.
-- **Platform Chain [PROPOSED]:** A dedicated platform sequence starting at 1 for `tenant_id IS NULL` system events.
-- **Concurrency Serialization:** In memory, writes to each tenant's chain are protected by a tenant-scoped synchronization lock. At the database layer, `UNIQUE (tenant_id, sequence)` prevents forking.
+- **Platform Chain [PROPOSED]:** A dedicated platform sequence starting at 1 for `tenant_id IS NULL` system events, using a fixed all-zero UUID sentinel (`00000000-0000-0000-0000-000000000000`) in the database counter table.
+- **Database Counter Table (`audit_chain`):** Maintains the sequence counter (`last_sequence`) and cryptographic tip (`last_hash`) per tenant directly in PostgreSQL.
+- **Concurrency Serialization & Single Transaction Guarantee:** Writes to each tenant's chain are serialized at the database level by acquiring an exclusive row lock on the tenant's row in the `audit_chain` counter table (`SELECT ... FOR UPDATE` in a single transaction). The complete sequence of steps:
+  1. Ensure the counter row exists: `INSERT INTO audit_chain (chain_key, last_sequence, last_hash) VALUES (?, 0, '000...000') ON CONFLICT (chain_key) DO NOTHING;`
+  2. Lock the chain counter row: `SELECT last_sequence, last_hash FROM audit_chain WHERE chain_key = ? FOR UPDATE;`
+  3. Increment sequence: `nextSequence = last_sequence + 1;`
+  4. Compute SHA-256 hash using `last_hash` as `prev_hash`;
+  5. Insert the new audit record into `audit_log`;
+  6. Update the counter row: `UPDATE audit_chain SET last_sequence = ?, last_hash = ? WHERE chain_key = ?;`
+  Simultaneous callers for the same tenant wait in line at the row lock. This guarantees gapless, strictly monotonic sequence numbers (1, 2, 3...) without duplicates, and prevents hash chain forks. A rollback undoes the counter advancement cleanly without leaving gaps.
+- **Backstop Unique Index:**
+  `CREATE UNIQUE INDEX uq_audit_log_tenant_seq ON audit_log (COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid), sequence);`
+  Guarantees at the database engine level that no duplicate sequence number can ever be committed for any tenant or for the platform chain.
+- **Prohibited Anti-Pattern:** A PostgreSQL `SEQUENCE` object must **not** be used (causes unrecoverable sequence gaps on rollbacks and does not isolate sequences per tenant).
 
 ### 6.2 Deterministic SHA-256 Hash Calculation
 The hash of each row is computed by hashing the UTF-8 bytes of a canonical pipe-separated string:

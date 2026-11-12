@@ -31,18 +31,25 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 2000ms
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
 
 server:
   port: ${SERVER_PORT:8080}
   servlet:
     context-path: /
 
-# Actuator exposes only health, info, metrics
+# Actuator exposes only health, info, metrics, prometheus
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
       base-path: /actuator
   endpoint:
     health:
@@ -61,9 +68,38 @@ springdoc:
     path: /swagger-ui.html
     enabled: true
 
-# Security & Tokens
+# Security & Staff Identity
 security:
   jwt:
+    staff-secret: ${JWT_STAFF_SECRET:default-testing-secret-must-be-at-least-32-bytes-long!}
+    issuer: venue-nexus
+    audience: venue-nexus-staff
+    access-ttl: PT15M
+    leeway: PT0S
     secret: ${JWT_SECRET:dGhpcy1pcy1hLXRlbXBvcmFyeS1kZXYtc2VjcmV0LWtleS1mb3ItdmVudWUtbmV4dXMtcGxhdGZvcm0=}
     access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS:900}
     refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS:604800}
+
+  refresh:
+    ttl: P7D
+
+  login:
+    max-failed-attempts: 5
+    lockout-duration: PT15M
+
+  password:
+    bcrypt-strength: 12
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+# QR Service Configuration
+
+venuenexus:
+  dev:
+    bootstrap-enabled: ${DEV_BOOTSTRAP_ENABLED:false}
+    admin-email: ${DEV_ADMIN_EMAIL:admin@localhost}
+    admin-password: ${DEV_ADMIN_PASSWORD:}
+  qr:
+    public-base-url: ${PUBLIC_BASE_URL:http://localhost:8080}
+    path-prefix: ${QR_PATH_PREFIX:/q/}

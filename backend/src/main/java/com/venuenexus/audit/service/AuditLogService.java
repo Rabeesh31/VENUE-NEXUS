@@ -5,6 +5,7 @@ import com.venuenexus.audit.model.AuditRecord;
 import com.venuenexus.audit.port.AuditLogStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -40,6 +41,7 @@ public class AuditLogService {
         this(auditLogStore, sanitizer, (PlatformTransactionManager) null);
     }
 
+    @Autowired
     public AuditLogService(AuditLogStore auditLogStore, AuditDetailsSanitizer sanitizer, @Nullable PlatformTransactionManager transactionManager) {
         this.auditLogStore = auditLogStore;
         this.sanitizer = sanitizer;

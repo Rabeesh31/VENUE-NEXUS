@@ -1,5 +1,4 @@
 /**
- * Common API error models, exception handling, filters, and pagination abstractions.
- * Phase 1 responsibility (Backend Lead Rithik Saran).
+ * Common shared utilities, base entities, and exception models.
  */
 package com.venuenexus.common;

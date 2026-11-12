@@ -1,5 +1,4 @@
 /**
- * Tenant and venue hierarchy management package (organisation, location, space, department).
- * Phase 4 responsibility (Ashwin).
+ * Tenant and venue hierarchy domain module (Tenant, Organisation, Location, Space, Department).
  */
 package com.venuenexus.venue;

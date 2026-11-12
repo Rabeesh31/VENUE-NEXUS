@@ -8,6 +8,8 @@ dist/
 build/
 **/build/
 .pnpm-store/
+*.zip
+**/*.zip
 
 # Environment and secrets
 .env

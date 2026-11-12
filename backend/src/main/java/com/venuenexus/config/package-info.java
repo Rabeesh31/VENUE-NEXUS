@@ -1,5 +1,4 @@
 /**
- * Application and security configuration package.
- * Phase 1 / Phase 3 responsibility.
+ * Application configurations (database, security, web, metrics).
  */
 package com.venuenexus.config;

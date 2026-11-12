@@ -1,18 +1,51 @@
 spring:
   application:
-    name: venue-nexus-backend-test
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+    name: venue-nexus-test
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+    show-sql: false
+  flyway:
+    enabled: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
 
 security:
   jwt:
+    staff-secret: test-secret-key-that-is-at-least-32-bytes-long-for-hmac-sha256!
+    issuer: venue-nexus
+    audience: venue-nexus-staff
+    access-ttl: PT15M
+    leeway: PT0S
     secret: dGhpcy1pcy1hLXRlc3Qtc2VjcmV0LWtleS1mb3ItdmVudWUtbmV4dXMtYXVkaXQtYW5kLXNlY3VyaXR5LXRlc3RzCg==
     access-token-expiration-seconds: 900
     refresh-token-expiration-seconds: 604800
+  refresh:
+    ttl: P7D
+  login:
+    max-failed-attempts: 5
+    lockout-duration: PT15M
+  password:
+    bcrypt-strength: 10
+  cors:
+    allowed-origins: http://localhost:3000
+
+PUBLIC_BASE_URL: http://localhost:8080
+venuenexus:
+  qr:
+    path-prefix: /q/
 
 management:
   endpoints:

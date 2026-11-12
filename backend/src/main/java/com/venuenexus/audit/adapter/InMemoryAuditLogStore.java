@@ -15,8 +15,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * In-memory adapter for AuditLogStore port.
  * Maintained for fast, zero-dependency unit tests without requiring a running database.
  */
-@Repository
-@ConditionalOnMissingBean(name = "jdbcAuditLogStore")
 public class InMemoryAuditLogStore implements AuditLogStore {
 
     // Sentinel key representing platform-level events (where tenantId is null)

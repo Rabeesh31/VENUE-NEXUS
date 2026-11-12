@@ -22,9 +22,6 @@ import java.util.UUID;
  * Maintains sequence counter in the audit_chain table and serializes chain progression
  * per tenant at the database level using row locks (SELECT ... FOR UPDATE) in a single transaction.
  */
-@Repository
-@Primary
-@ConditionalOnBean(JdbcTemplate.class)
 public class JdbcAuditLogStore implements AuditLogStore {
 
     public static final UUID PLATFORM_CHAIN_KEY = new UUID(0L, 0L);

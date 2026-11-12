@@ -25,7 +25,7 @@ venue-nexus/
 │       │   ├── audit/        # Hash-chained append-only audit log
 │       │   └── outbox/       # Outbox event persistence
 │       └── main/resources/
-├── frontend/                 # React 18, TypeScript, Vite, React Router
+├── frontend/                 # React 18, JavaScript, Vite
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── src/
@@ -44,8 +44,7 @@ venue-nexus/
 ├── infra/                    # Deployment scripts and container definitions
 ├── docker-compose.yml        # Local development infrastructure
 ├── .env.example              # Environment variables template
-├── pnpm-workspace.yaml       # pnpm workspace definition
-└── .github/workflows/        # CI/CD pipelines (build, test, arch, secret scan)
+└── .github/workflows/        # CI/CD pipeline (backend, frontend, docs, secret scan)
 ```
 
 ---
@@ -54,7 +53,7 @@ venue-nexus/
 
 - **Java Development Kit (JDK):** Version 21
 - **Node.js:** Version 20+ (v24 LTS tested)
-- **pnpm:** Version 9+ (v12 tested)
+- **npm:** Version 10+ (Node.js 20+)
 - **Docker & Docker Compose:** Version 24+
 - **Git:** Version 2.40+
 
@@ -69,10 +68,15 @@ cp .env.example .env
 ```
 
 ### 2. Start Local Supporting Services
-Launch PostgreSQL 16, Redis, and MinIO:
+Launch the verified Sprint 1 services:
 ```bash
-docker compose up -d
+docker compose up -d postgres redis
 ```
+
+The Compose file also declares MinIO for the planned object-storage
+integration, but its pinned image is currently unavailable from the checked
+public registries. MinIO is therefore not part of the verified Sprint 1
+startup path.
 
 ### 3. Build & Run Backend
 From the repository root:
@@ -88,10 +92,17 @@ The backend server will start on port `8080`.
 ### 4. Build & Run Frontend
 Install dependencies and launch the Vite development server:
 ```bash
-pnpm install
-pnpm dev
+cd frontend
+npm install
+npm run dev
 ```
 The frontend dashboard will be accessible at `http://localhost:5173`.
+
+The frontend reads `VITE_API_BASE_URL` from `frontend/.env` (default:
+`http://localhost:8080`). The backend accepts the Vite origin through
+`CORS_ALLOWED_ORIGINS` (default: `http://localhost:5173`). Authentication uses
+the backend-issued bearer access token and refresh token; no demo or offline
+mock data is used.
 
 ---
 
@@ -102,10 +113,43 @@ The frontend dashboard will be accessible at `http://localhost:5173`.
 ./mvnw -f backend/pom.xml clean verify
 ```
 
-### Frontend Workspace Build
+### Frontend Production Build
 ```bash
-pnpm -r build
+cd frontend
+npm run build
 ```
+
+## Integration status
+
+The completed Phase 7 UI is integrated into `frontend/` and calls the Sprint 1
+backend endpoints for authentication, organisations, locations, spaces,
+departments, resources, tenants, and QR management. See
+[`docs/INTEGRATION_REPORT.md`](docs/INTEGRATION_REPORT.md) for the verified
+endpoint mapping, test results, and remaining backend limitations.
+Tenant administrators and venue managers can also use the Staff Management
+page to create, deactivate, and reactivate real backend staff accounts. There
+is no public self-registration flow.
+
+The local Compose file still declares MinIO for the planned S3-compatible
+asset-storage integration, but the pinned public image is currently
+unavailable. The current Sprint 1 backend does not contain an object-storage
+client or upload/download/delete workflow, so MinIO remains an infrastructure
+gap rather than a silently substituted service.
+
+## Postman handoff
+
+The authentication/security collection and environment are available at:
+
+- `docs/postman/venue-nexus-auth.postman_collection.json`
+- `docs/postman/venue-nexus-auth.postman_environment.json`
+
+The environment uses the local bootstrap email `admin@localhost`; set
+`staffPassword` to the local development password before running the
+collection. The three basic authentication requests were verified against the
+running backend: valid login returned 200, bad password returned 401, and
+unknown email returned 401. The remaining requests require dedicated seeded
+fixtures or test-only endpoints and are retained as handoff scenarios rather
+than reported as executed.
 
 ---
 

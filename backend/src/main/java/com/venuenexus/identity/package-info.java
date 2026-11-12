@@ -1,5 +1,4 @@
 /**
- * Staff identity, credentials verification and refresh-token management package.
- * Phase 3 responsibility (Steffina).
+ * Staff identity, authentication, and token management domain module.
  */
 package com.venuenexus.identity;
